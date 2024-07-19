@@ -45,4 +45,9 @@ contract NikitaS20 is ERC20
     {
         return frozenAccounts[account];
     }
+
+    function transfer(address recipient, uint256 amount) public override notFrozen(msg.sender) notFrozen(recipient) returns (bool) 
+    {
+        return super.transfer(recipient, amount);
+    }
 }
