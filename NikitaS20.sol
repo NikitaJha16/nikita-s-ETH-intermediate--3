@@ -11,7 +11,7 @@ contract NikitaS20 is ERC20
     constructor() ERC20("DISNEY", "DN")
     {
         owner = msg.sender;
-        _mint(owner, 7000*10**decimals());
+        _mint(owner, 7000);
     }
 
     modifier onlyOwner() 
