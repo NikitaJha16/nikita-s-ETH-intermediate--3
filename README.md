@@ -1,68 +1,97 @@
-# NikitaS20 Token
+## NikitaS20 Token Smart Contract
 
-NikitaS20 is a custom ERC20 token named "DISNEY" with the symbol "DN" built using the OpenZeppelin library. The contract includes functionalities for minting, burning, and freezing accounts.
+### Overview
+The `NikitaS20` smart contract is an ERC20 token implementation using the OpenZeppelin library. This contract introduces additional functionality, such as account freezing and custom transfer functions, to enhance the standard ERC20 behavior.
 
-## Features
-
-- **Minting:** The contract owner can mint new tokens.
-- **Burning:** Users can burn their tokens, unless their account is frozen.
-- **Freezing Accounts:** The contract owner can freeze and unfreeze accounts.
-- **Ownership:** Only the contract owner has special permissions for minting and freezing accounts.
-
-## Contract Overview
-
-### Contract Details
-
+### Token Details
 - **Token Name:** DISNEY
 - **Token Symbol:** DN
-- **Initial Supply:** 7000 DN (allocated to the contract owner)
+- **Initial Supply:** 7000 DN 
 
-### Functions
+### Features
+1. **Minting Tokens:** Only the contract owner can mint new tokens.
+2. **Burning Tokens:** Any user can burn their own tokens, provided their account is not frozen.
+3. **Freezing Accounts:** The contract owner can freeze or unfreeze accounts, preventing frozen accounts from transferring tokens.
+4. **Custom Transfer Functionality:** Custom transfer functions ensure that frozen accounts cannot transfer tokens.
+
+### Contract Functions
+
+#### Constructor
+```solidity
+constructor() ERC20("DISNEY", "DN") {
+    owner = msg.sender;
+    _mint(owner, 7000 );
+}
+```
+Initializes the contract, sets the owner, and mints the initial supply of tokens to the owner.
+
+#### Modifiers
+```solidity
+modifier onlyOwner() {
+    require(msg.sender == owner, "Not the contract owner");
+    _;
+}
+
+modifier notFrozen(address account) {
+    require(!frozenAccounts[account], "Account is frozen");
+    _;
+}
+```
+- `onlyOwner`: Restricts function access to the contract owner.
+- `notFrozen`: Ensures that the account is not frozen.
 
 #### Minting Tokens
-
 ```solidity
-function mintTokens(address to, uint256 amount) public onlyOwner
+function mintTokens(address to, uint256 amount) public onlyOwner {
+    _mint(to, amount);
+}
 ```
-
-Allows the contract owner to mint new tokens to a specified address.
+Allows the contract owner to mint new tokens.
 
 #### Burning Tokens
-
 ```solidity
-function burnTokens(uint256 amount) public notFrozen(msg.sender)
+function burnTokens(uint256 amount) public notFrozen(msg.sender) {
+    _burn(msg.sender, amount);
+}
 ```
-
-Allows users to burn their tokens unless their account is frozen.
+Allows users to burn their own tokens if their account is not frozen.
 
 #### Freezing Accounts
-
 ```solidity
-function freezeAccount(address account, bool freeze) public onlyOwner
+function freezeAccount(address account, bool freeze) public onlyOwner {
+    frozenAccounts[account] = freeze;
+}
 ```
+Enables the contract owner to freeze or unfreeze an account.
 
-Allows the contract owner to freeze or unfreeze an account.
-
-#### Check if Account is Frozen
-
+#### Checking if an Account is Frozen
 ```solidity
-function isAccountFrozen(address account) public view returns (bool)
+function isAccountFrozen(address account) public view returns (bool) {
+    return frozenAccounts[account];
+}
 ```
+Returns the frozen status of an account.
 
-Allows anyone to check if a specific account is frozen.
+#### Transfer Function
+```solidity
+function transfer(address recipient, uint256 amount) public override notFrozen(msg.sender) notFrozen(recipient) returns (bool) {
+    _transfer(msg.sender, recipient, amount);
+    return true;
+}
+```
+Overrides the standard ERC20 `transfer` function to include frozen account checks.
 
+#### Transfer From Function
+```solidity
+function transferFrom(address sender, address recipient, uint256 amount) public override notFrozen(sender) notFrozen(recipient) returns (bool) {
+    _transfer(sender, recipient, amount);
+    uint256 currentAllowance = allowance(sender, msg.sender);
+    require(currentAllowance >= amount, "ERC20: transfer amount exceeds allowance");
+    _approve(sender, msg.sender, currentAllowance - amount);
+    return true;
+}
+```
+Overrides the standard ERC20 `transferFrom` function to include frozen account checks.
 
-## Built With
-
-- [OpenZeppelin](https://openzeppelin.com/) - Library for secure smart contract development.
-- [Solidity](https://soliditylang.org/) - Programming language for writing smart contracts.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- [OpenZeppelin Community](https://forum.openzeppelin.com/) - For providing a comprehensive library for secure smart contract development.
-
-
+### License
+This project is licensed under the MIT License.
