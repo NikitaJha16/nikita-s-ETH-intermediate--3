@@ -48,6 +48,16 @@ contract NikitaS20 is ERC20
 
     function transfer(address recipient, uint256 amount) public override notFrozen(msg.sender) notFrozen(recipient) returns (bool) 
     {
-        return super.transfer(recipient, amount);
+        _transfer(msg.sender, recipient, amount);
+        return true;
+    }
+
+    function transferFrom(address sender, address recipient, uint256 amount) public override notFrozen(sender) notFrozen(recipient) returns (bool)
+    {
+        _transfer(sender, recipient, amount);
+        uint256 currentAllowance = allowance(sender, msg.sender);
+        require(currentAllowance >= amount, "ERC20: transfer amount exceeds allowance");
+        _approve(sender, msg.sender, currentAllowance - amount);
+        return true;
     }
 }
